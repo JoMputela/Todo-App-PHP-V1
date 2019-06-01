@@ -1,158 +1,99 @@
 <?php
-session_start();
 
-require 'function.php';
+require_once 'app/init.php';
 
- 
+$itemsQuery = $db->prepare("
+	SELECT id, name, done
+	FROM items
+	WHERE user = :user
 
-// check if the delete and task is set in the GET / URL
-if (isset($_GET['delete']) && isset($_GET['task'])) {
-  // Call delete function with task
-  delete($_GET['task'],$_GET['duedate']);
-  // session_unset();
-}
+	");
 
-// check if the form has been submitted
-if (isset($_POST['submit'])) {
-  // Call add function with task
-  add($_POST['task'],$_POST['duedate']);
-}
+$itemsQuery->execute([
 
+	'user' => $_SESSION['user_id']
+]);
 
+$items = $itemsQuery->rowCount() ? $itemsQuery : [];
 
+//foreach($items as $item){
+//	print_r($item['name']);
+//}
 
-$taskname = '';
-if (isset($_GET['task'])) {
-  $taskname = $_GET['task'];
-} 
 ?>
-​
+
+
+
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Todo App</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
 
+<link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Raleway&display=swap" rel="stylesheet">
 
 
-
-<style type="text/css">
-  
-
-
-
-@import url(
-
-'href="https://fonts.googleapis.com/css?family=Black+And+White+Picture|Macondo+Swash+Caps|Montaga&display=swap" rel="stylesheet'
-
-
-    );
-
-html{
-
-font-family: 'Montaga', serif;
-font-family: 'Black And White Picture', sans-serif;
-font-family: 'Macondo Swash Caps', cursive;
-    
-}
-
-body{
-    background-image: url(5.jpg);
-    background-size: cover;
-}
-h5{
-    text-align: center;
-}
-.todoform{
-    /*width: 35%; */
-    border: 29px solid #51c149;
-    padding: 35px;
-    margin: -11px;
-    margin-left: 630px;
-    margin-right: 100px;
-    /* margin-top: 100px; */
-    border-width: 5px 0.5px 2px 7px;
-    background-color: #9c9fa56b;
-    border-radius: 21px;
-}
-.inp{
-    margin: auto;
-    margin-left: 50px;
-}
-.inp input{
-   width: 58%;
-    height: 38px;
-    margin: 8px;
-    background-color: #acec8b6e;
-    border-radius: 11px;
-
-}
-#Submit22{
-   margin-left: 118px;
-    width: 36%;
-    height: 36px;
-    background-color: #46ab3fbf;
-    border-radius: 17px;
-}
-#form{
-    margin: auto;
-}
-ul li{
-    list-style-type: none;
-}
-
-
-
-
-
-</style>
-
-
-
-
-
-
-
-
+    <title>To Do List</title>
+	<link rel="stylesheet" href="main.css">
 
   </head>
   <body>
-      <div class="todoform">
-        <form action="index.php" method="POST" class='form' id="form">
-            <h1>TODO APP</h1>
-          <div class="inp">
-            <div>
-              <label>Add Task:</label> <input type="text" name="task" value="<?php echo  $taskname; ?>">
-            </div>
-            <div>
-              <label>Due Date:</label><input type="date" name="duedate" required>
-            </div>
-            <div>
-              <input type="submit" name="submit" id="submit"/>
-            </div>
-          </div>
-        </form>
 
-        <ul>
-          <?php
-          if (isset($_SESSION['tasks'])) {
-            echo 'No of tasks: ' . count($_SESSION['tasks']);
-            foreach ($_SESSION['tasks'] as $task) {
-          ?>
-            <li><?php echo $task[0] . "  /  ".$task[1]; ?> <a href="index.php?delete=1&task=<?php echo $task[0]; ?>&duedate=<?php echo $task[1] ?>">delete</a> <a href="index.php?edit=1&task=<?php echo $task[0]; ?>">edit</a></li>
-          <?php
-            }
-          } ?>
-        </ul>
-      </div>
+<div class="list">
+	    <h1 class="header">To Do</h1>
+
+
+
+	    <?php if (!empty($items)): ?> 
+	
+	    	<ul class="items">
+
+	    <?php foreach($items as $item): ?>
+
+		    	<li>
+		    		<span class="item<?php echo $item['done'] ? ' done' : '' ?>"><?php echo $item['name']; ?></span>
+
+		    	<?php if (!$item['done']): ?>
+		    		<a href="mark.php?as=done&item=<?php echo $item['id']; ?>" class="done-button">mark as done</a>
+		    		
+		    	<?php endif; ?>
+		    	</li>
+
+		<?php endforeach; ?>
+	    	</ul>
+
+
+	    <?php else: ?>
+	    	<p>you haven't added items yet</p>
+	    <?php endif; ?>
+
+
+	    <form class="item-add" action="add.php" method="post">
+	    	<input type="text" name="name" placeholder="Type a new item here." class="input" autocomplete="off" required>
+	    	<input type="submit" class="submit" value="Add">
+	    </form>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>
-
-
-
-
-
-
-
-
